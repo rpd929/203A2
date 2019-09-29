@@ -1,4 +1,7 @@
 import java.io.*;
+import java.text.*;
+
+
 public class a2 {
 
    
@@ -14,12 +17,16 @@ public class a2 {
         static int dequeueIndex = 0;
         static int index = 0;
         static int largestQueueSize = 0;
+        static int customerAvgQueueSum = 0;
+        static int customerAvgQueueCount;
       
 
         public static void push(Customer customer) {
             customerQueue[index] = customer;
             //System.out.println("Adding Customer: " + totalCustomers  );
             index = index + 1;
+            customerAvgQueueCount++;
+            customerAvgQueueSum = customerAvgQueueSum + index;
             if(index > largestQueueSize) {
                 largestQueueSize = index;
             }
@@ -33,6 +40,8 @@ public class a2 {
     
         public static void pop() {
             index = index - 1;      
+            customerAvgQueueCount++;
+            customerAvgQueueSum = customerAvgQueueSum + index;
         }
     
         public static Boolean isEmpty() {   
@@ -48,7 +57,7 @@ public class a2 {
         static int index = 0;
         static int totalEvents = 0;
 
-        static Event[] eventQueue = new Event[1000];
+        static Event[] eventQueue = new Event[100];
      
 
         public static void enqueue(Event event) {
@@ -67,10 +76,7 @@ public class a2 {
 
         public static Event dequeue() {
             
-           
             Event event = EventQueue.eventQueue[0];
-            
-           
             EventQueue.swap(EventQueue.eventQueue, 0, index -1);
             EventQueue.eventQueue[index-1] = null;
             index = index - 1;
@@ -166,38 +172,8 @@ public class a2 {
             }
     }
 
-    static boolean isMinHeap(Event[] heap, int i, int n) { 
-        // If a leaf node  
-        if (i > (n - 2) / 2) { 
-
-            return true; 
-           
-        } 
-        if((2 * i + 2) == n) {
-            if (heap[i].eventTime <= heap[(2 * i + 1)].eventTime) {
-                return true;
-            } else {
-                return false;
-            }
-
-        }
-        // If an internal node and is greater than its children, and  
-        // same is recursively true for the children  
-        if (heap[i].eventTime <= heap[(2 * i + 1)].eventTime && (heap[i].eventTime <= heap[(2 * i + 2)].eventTime || (2 * i + 2)  == n) 
-                && isMinHeap(heap, 2 * i + 1, n) && isMinHeap(heap, 2 * i + 2, n) ) { 
-            return true; 
-        } 
-        //System.out.println(heap[i] + "  greater than " + heap[(2 * i + 1)] + " or " + heap[(2 * i + 2)]);
-        return false; 
-    } 
-
-
     }
 
-    public static class ServerFinish {
-        double finishTime;
-        int serverNumber;
-    }
 
     public static class Event {
         int eventType;
@@ -347,7 +323,7 @@ public class a2 {
                 }
             }
             customersServed[fastest]++;
-            System.out.println("Fastest server was: " + serverQueue[fastest].serverNumber + " Busy: " + serverQueue[fastest].busyFlag );
+            //System.out.println("Fastest server was: " + serverQueue[fastest].serverNumber + " Busy: " + serverQueue[fastest].busyFlag );
             return fastest;
         }
 
@@ -488,21 +464,26 @@ public class a2 {
 
     public static void main(String[] args) {
        
-        File file = new File("test.txt"); 
+        File file = new File("ass2.txt"); 
         int totalCustomers = 0;
         double[] serverBusyTime = new double[20];
+        int noWaitCount = 0;
+        double averageWaitTimeSum = 0;
 
         try {
             BufferedReader br = new BufferedReader(new FileReader(file)); 
             boolean firstServer = true;
             boolean firstCustomer = true;
+            
 
             // This section adds servers into a server heap
             String newCustomerLine = "";
             String[] parts;
             if(br.ready()) {
                 newCustomerLine = br.readLine();
+                newCustomerLine = br.readLine();
                 parts = newCustomerLine.split("\t"); 
+               
                 while(parts.length == 1) {     
                     double serverEfficiency = Double.parseDouble(parts[0]);
                     Server newServer = new Server(serverEfficiency);
@@ -514,20 +495,11 @@ public class a2 {
                     parts = newCustomerLine.split("\t"); 
                 }
                 
-                if(ServerArray.isMinHeap(ServerArray.serverQueue, 0, ServerArray.index)) {
-                    System.out.println("Is Min Heap?: True");
-                    for(int x = 0; x < ServerArray.index; x++) {
-                        System.out.println(ServerArray.serverQueue[x]);
-                    }
-                   
-                    } else {
-                        System.out.println("Is Min Heap?: False");
-                    }
             }
             
             //Read first customer record in from the file and add to eventQueue
             //newCustomerLine = br.readLine();
-            System.out.println(newCustomerLine);
+            //System.out.println(newCustomerLine);
             parts = newCustomerLine.split("\t"); 
 
             double arrivalTime = Double.parseDouble(parts[0]);
@@ -551,7 +523,7 @@ public class a2 {
             while(EventQueue.isEmpty() == false) {
                 Event evt = EventQueue.dequeue();
                 
-                System.out.println("Event dequeued: " + evt.eventType + " " + evt.toString());
+                //System.out.println("Event dequeued: " + evt.eventType + " " + evt.toString());
                 currentTime = evt.eventTime;
                 
                 /*If the EventType is a CustomerArrival Event, set the server’s idle flag to busy,calculate the 
@@ -560,11 +532,11 @@ public class a2 {
                     totalCustomers++;   
                     if(ServerArray.hasIdleServer()) {
                         int fastestServer = ServerArray.findFastestIdleServer();
-                        
+                        noWaitCount++;
                         ServerArray.serverQueue[fastestServer].busyFlag = true;
-                       
-                        System.out.println("Customer#" + totalCustomers + " arrival, assigned to Server#" + ServerArray.serverQueue[fastestServer].serverNumber + " busy: " +  ServerArray.serverQueue[fastestServer].busyFlag);  
-                        System.out.println();
+                        
+                        //System.out.println("Customer#" + totalCustomers + " arrival, assigned to Server#" + ServerArray.serverQueue[fastestServer].serverNumber + " busy: " +  ServerArray.serverQueue[fastestServer].busyFlag);  
+                        //System.out.println();
                         double paymentTime = 0;
                         
                         if(evt.paymentType) {
@@ -582,15 +554,15 @@ public class a2 {
                         serverBusyTime[fastestServer] = currentBusyCount + serviceTime;
                         EventQueue.push(serverFinish);
                         EventQueue.siftUp(EventQueue.index-1);
-                        System.out.println("Customer#" + totalCustomers + " arrival with service time: " + serviceTime + ", assigned to Server#" + ServerArray.serverQueue[fastestServer].serverNumber + " busy: " +  ServerArray.serverQueue[fastestServer].busyFlag);  
+                        //System.out.println("Customer#" + totalCustomers + " arrival with service time: " + serviceTime + ", assigned to Server#" + ServerArray.serverQueue[fastestServer].serverNumber + " busy: " +  ServerArray.serverQueue[fastestServer].busyFlag);  
 
                        
                         
                     }  else {
                         // If there are no available servers, add the event's customer to the customerQueue
                         CustomerQueue.push(evt.customer);
-                        System.out.println("Customer: " + totalCustomers + " added to queue");
-                        System.out.println();
+                        //System.out.println("Customer: " + totalCustomers + " added to queue");
+                        //System.out.println();
                     }
                     //If not end of the file, read in next customerArrival and add it to the EventQueue
                     if(br.ready()) {
@@ -619,14 +591,15 @@ public class a2 {
                 int serverNumber = evt.serverNumber;
                 int serverPosition = ServerArray.getServerPosition(serverNumber);
                 ServerArray.serverQueue[serverPosition].busyFlag = false;
-                System.out.println(ServerArray.serverQueue[serverPosition].busyFlag + " Server Finish: server#" + ServerArray.serverQueue[serverPosition].serverNumber + " finished serving " + evt.toString());
-                System.out.println();
+                //System.out.println(ServerArray.serverQueue[serverPosition].busyFlag + " Server Finish: server#" + ServerArray.serverQueue[serverPosition].serverNumber + " finished serving " + evt.toString());
+                //System.out.println();
                 //If there are customers in the CustomerQueue...
                 if(CustomerQueue.isEmpty() == false) {
                     
                     CustomerQueue.pop();
                     Customer customer = CustomerQueue.top();
-                  
+                    double waitTime = currentTime - customer.arrivalTime;
+                    averageWaitTimeSum = averageWaitTimeSum + waitTime;
                    
 
                     //Find fastest idle server and set server flag to busy, calculate finish time
@@ -643,43 +616,59 @@ public class a2 {
 
                     double serviceTime =  (customer.tallyTime *  ServerArray.serverQueue[fastestServer].efficiencyFactor) + paymentTime;
                     double currentBusyCount = serverBusyTime[fastestServer];
-                    System.out.println("curent BC: " + currentBusyCount + " ST: " + serviceTime);
+                    //System.out.println("curent BC: " + currentBusyCount + " ST: " + serviceTime);
                     serverBusyTime[fastestServer] = currentBusyCount + serviceTime;
                     double finishTime = currentTime + serviceTime;
 
                     Event serverFinish = new Event(1, finishTime, serviceTime, customer.paymentType, ServerArray.serverQueue[fastestServer].serverNumber);
-                    System.out.println("Queued Customer " + " assigned to Server#" + ServerArray.serverQueue[fastestServer].serverNumber + "finish time: " + finishTime + ", tallyTime: " + evt.tallyTime + ", serviceTime: " + serviceTime +  ", EF: " + ServerArray.serverQueue[fastestServer].efficiencyFactor + ", PTime: " + paymentTime);
-                    System.out.println();
+                    //System.out.println("Queued Customer " + " assigned to Server#" + ServerArray.serverQueue[fastestServer].serverNumber + "finish time: " + finishTime + ", tallyTime: " + evt.tallyTime + ", serviceTime: " + serviceTime +  ", EF: " + ServerArray.serverQueue[fastestServer].efficiencyFactor + ", PTime: " + paymentTime);
+                    //System.out.println();
                     EventQueue.push(serverFinish);
                     EventQueue.siftUp(EventQueue.index-1);
 
                 } else {
-                    System.out.println("Customer queue is empty!");
+                    //System.out.println("Customer queue is empty!");
                 }
             }
         }
-            if(EventQueue.isMinHeap(EventQueue.eventQueue, 0, EventQueue.index)) {
-                System.out.println("Is Min Heap?: True");
-            } else {
-                System.out.println("Is Min Heap?: False");
-            }
+    
             
             System.out.println("total customers: " + totalCustomers);
-            System.out.println("total time: " + currentTime);
+            System.out.println("total time: " + trimDouble(currentTime));
             System.out.println("largest queue length: " + CustomerQueue.largestQueueSize);
-
+            System.out.println("Average Size of Customer Queue: " + trimDouble(((double)CustomerQueue.customerAvgQueueSum / (double)CustomerQueue.customerAvgQueueCount)));
+            System.out.println("Average wait per customer: " + trimDouble((averageWaitTimeSum / totalCustomers)));
+            System.out.println("% Customers with no wait: " + (trimDouble((noWaitCount / (double)totalCustomers) * 100)) + "%");
+            System.out.println();
+            
             for(int x = 0; x < ServerArray.index; x++) {
                 double serverIdleTime = currentTime - serverBusyTime[x];
-                System.out.println("Server#: " + ServerArray.serverQueue[x].serverNumber + " Customers Served: " + ServerArray.customersServed[x] + " Total Idle Time: " + serverIdleTime);
+                System.out.println("Server#:" + ServerArray.serverQueue[x].serverNumber + " \t Efficiency: " +  trimDouble(ServerArray.serverQueue[x].efficiencyFactor) +  "\t Customers Served: " + ServerArray.customersServed[x] + "\t Total Idle Time: " + trimDouble(serverIdleTime));
             }
-            System.out.println(EventQueue.totalEvents);
+            //System.out.println(EventQueue.totalEvents);
            
           }  catch( Exception e) {
                 System.out.println(e.toString());
                 e.printStackTrace();
         }
     }
+
+    public static String trimDouble(double d) {
+        
+        DecimalFormat df = new DecimalFormat("#.##");
+        return df.format(d);
+    }
 }
 
-    
+/* The structures used to store the Customer Queue was a stack, 
+    which allowed the customers to be accessed in the correct 
+    order with only no comparissons as the correct customer is 
+    always at the front. The Event Queue and the Servers were 
+    kept in a heap in order to optimise for speed.This allowed 
+    for both the Events and the servers to be accessed quickly, 
+    either by always taking from the 1st position in the case 
+    of Event, and then re-making the heap to push the highest 
+    priority to the 1st position, or searching through the heap 
+    and finding the fastest idle server in the case of ServerQueue. */
+
     
